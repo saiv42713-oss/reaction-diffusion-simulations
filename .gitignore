@@ -1,0 +1,26 @@
+__pycache__/
+extras/
+
+results/
+runs/
+simulation_results/
+
+archived/
+
+# Mac
+.DS_Store
+
+*.pyc
+*.pyo
+*.pyd
+
+*.png
+*.mp4
+*.npz
+
+venv/
+.env/
+.venv/
+
+.vscode/
+.idea/
