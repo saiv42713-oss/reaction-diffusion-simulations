@@ -1,5 +1,5 @@
 # JAPI Circuit Enumerator
-A computational framework for enumerating, filtering, and evaluating 
+Acomputational framework for enumerating, filtering, and evaluating 
 genetic circuit designs for biological patterning, based on Fig S15 
 from Kunnan et al. 2026 (Morsut Lab, USC).
 
