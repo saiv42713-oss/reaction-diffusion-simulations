@@ -1,0 +1,46 @@
+outdir: runs/template-single-circuit
+
+base:
+  Nx: 100
+  Ny: 100
+  steps: 5000
+  dt: 0.01
+  dx: 1.0
+  save_every: 200
+  stopping_threshold: 0.0001
+  min_steps: 1000
+
+  init_mode: random_uniform_over0
+  activator_type: juxtacrine
+  spike_value: 1
+
+  act_decay_rate: 1.0
+  act_half_sat: 1.0
+  inh_half_sat: 1.0
+  basal_prod: 0.0
+
+  act_hill_coeff: 3
+  inh_hill_coeff: 3
+
+  act_prod_rate: 5.0
+  inh_prod_rate: 1.0
+  inh_decay_rate: 0.5
+
+  act_diffusion: 1.0
+  inh_diffusion: 10.0
+
+mode: grid
+sweeps:
+  inh_prod_rate:
+    lin: [1, 10.0, 10]  # alternative explicit 'lin' form
+  #act_hill_coeff:
+  #  lin: [1, 12, 12]
+  #inh_hill_coeff:
+  #  lin: [1, 12, 12]
+  #    - [12, 20, 5]
+  # 3-item list => linspace start..stop with num points
+  # explicit list of values is also fine:
+  # inh_prod_rate: [1.0, 2.0, 3.0, 5.0, 8.0]
+  # or logarithmic in decades:
+  # inh_diffusion:
+  #   log: [0, 2, 6]      # 10^0..10^2 with 6 points
