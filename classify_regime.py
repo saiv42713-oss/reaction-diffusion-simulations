@@ -61,7 +61,9 @@ def classify_regime(act_prod_rate, inh_prod_rate):
     save_every=SIM_PARAMS["save_every"]
     )
     final_A_spike = A_hist[-1]
-
+    # Check for ON state
+    if np.mean(final_A) > 0.1 and np.std(final_A) < 0.01:
+        return "ON"
     # DEBUG
     print(f"final_A_spike mean: {np.mean(final_A_spike):.4f}")
     print(f"final_A_spike max: {np.max(final_A_spike):.4f}")
@@ -102,6 +104,7 @@ def classify_regime(act_prod_rate, inh_prod_rate):
 if __name__ == "__main__":
     test_cases = [
         (8.0, 2.0),   # expect ON
+        (5.0, 5.0),   # expect IRREGULAR
         (10.0, 8.0),   # expect TURING
         (3.0, 8.0),   # expect OFF
     ]
