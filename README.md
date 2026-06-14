@@ -40,7 +40,7 @@ from Kunnan et al. 2026 (Morsut Lab, USC).
 ## Setup
 
 1. Clone this repo:
-git clone https://github.com/saivemula/JAPI-Circuit-Enumerator
+git clone https://github.com/saiv42713-oss/JAPI_Genecircuit_USC.git
 
 2. Clone the lab simulation code:
 git clone https://github.com/BenSwedlund/reaction_diffusion_simulations
