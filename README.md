@@ -28,12 +28,12 @@ from Kunnan et al. 2026 (Morsut Lab, USC).
 ---
 
 ## Output Files
-- `valid_circuits.json` — all 1,849 valid circuits
-- `turing_results.json` — Turing pass/fail for each circuit
+- `valid_circuits.json` - all 1,849 valid circuits
+- `turing_results.json` - Turing pass/fail for each circuit
 - `circuit_top1.png` through `circuit_top5.png` — top Turing candidate diagrams
-- `japi_circuit.png` — JAPI circuit diagram with legend
-- `fig1c_replication.png` — validated Fig 1C replication (10 panels)
-- `param_map.png` — regime map across ba/bi parameter space
+- `japi_circuit.png` - JAPI circuit diagram with legend
+- `fig1c_replication.png`- validated Fig 1C replication (10 panels)
+- `param_map.png` - regime map across ba/bi parameter space
 
 ---
 
@@ -78,25 +78,25 @@ python3 sweep.py
 
 ## File Structure
 
-JAPI_Circuit.py              — Phase 1: enumeration, LSA, circuit diagrams
+JAPI_Circuit.py              - Phase 1: enumeration, LSA, circuit diagrams
 
-classify_regime.py           — Phase 2: dual-sim regime classifier
+classify_regime.py           - Phase 2: dual-sim regime classifier
 
-fig1c.py                     — Phase 2: Fig 1C replication (na=ni=3)
+fig1c.py                     - Phase 2: Fig 1C replication (na=ni=3)
 
-sweep.py                     — Phase 2: parameter sweep + regime map
+sweep.py                     - Phase 2: parameter sweep + regime map
 
-calibrate.py                 — Phase 2: pattern metric calibration
+calibrate.py                 - Phase 2: pattern metric calibration
 
-pattern_metrics_reference.py — PI-provided pattern descriptor (describe_pattern)
+pattern_metrics_reference.py - PI-provided pattern descriptor (describe_pattern)
 
-valid_circuits.json          — 1,849 valid circuits
+valid_circuits.json          - 1,849 valid circuits
 
-turing_results.json          — LSA Turing check results per circuit
+turing_results.json          - LSA Turing check results per circuit
 
-param_map.png                — regime map (ba vs bi, na=10, ni=4, Di=20)
+param_map.png                - regime map (ba vs bi, na=10, ni=4, Di=20)
 
-fig1c_replication.png        — validated Fig 1C replication
+fig1c_replication.png        - validated Fig 1C replication
 
 ---
 
@@ -110,12 +110,12 @@ Each parameter set runs two simulations:
 | Sim 2 | `spike_steady_state` | Can the ON state sustain itself? |
 
 Classification order:
-1. **ON** — nucleation sim converges to uniform high-A (CV < 0.05)
-2. **ON** — spike sim shows >80% of cells above 0.5 × a_ss
-3. **TURING** — autocorrelation oscillates + FFT ratio > 40
-4. **IRREGULAR** — autocorrelation oscillates + FFT ratio ≤ 40
-5. **OFF** — spike sim collapses to zero
-6. **IRREGULAR** — fallback
+1. **ON** - nucleation sim converges to uniform high-A (CV < 0.05)
+2. **ON** - spike sim shows >80% of cells above 0.5 × a_ss
+3. **TURING** - autocorrelation oscillates + FFT ratio > 40
+4. **IRREGULAR** - autocorrelation oscillates + FFT ratio ≤ 40
+5. **OFF** - spike sim collapses to zero
+6. **IRREGULAR** - fallback
 
 ---
 
@@ -129,7 +129,7 @@ Fixed parameters: `na=10, ni=4, Di=20, db=0.5, da=1, juxtacrine`
 | IRREGULAR | Balanced ba/bi — activator nucleates but inhibitor limits spread |
 | ON | High ba, low bi (activator dominates) |
 
-Turing patterns are rare at na=10, ni=4 — the sharp switch forces cells to be
+Turing patterns are rare at na=10, ni=4, the sharp switch forces cells to be
 fully ON or OFF, breaking the gradual gradients Turing requires. This matches
 the paper's finding that ~99% of non-homogeneous patterns are Irregular at
 experimentally measured Hill coefficients.
@@ -143,7 +143,7 @@ experimentally measured Hill coefficients.
 - JSON circuit library and NetworkX graphs
 - LSA Turing checker (validated on JAPI at index 1285 and PAPI)
 - Fig S15-style circuit diagrams with legend
-- Fig 1C replication — PI confirmed
+- Fig 1C replication - PI confirmed
 - Dual-sim regime classifier (ON / IRREGULAR / OFF / TURING)
 - 5×8 parameter sweep with color-coded regime map
 
