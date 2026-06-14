@@ -1,7 +1,6 @@
 from enum import Enum
 from dataclasses import dataclass
 from itertools import product
-from xml.etree.ElementTree import PI
 import networkx as nx
 import json
 import numpy as np
@@ -10,12 +9,12 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-# Function that runs the whole pipeline from generating circuits to drawing the top Turing-positive ones
-def run_pipeline():
-    class Localization(Enum):
-        INTRACELLULAR = "intracellular"
-        MEMBRANE = "membrane"
-        SECRETED = "secreted"
+# ── Domain types ─────────────────────────────────────────────────────────────
+
+class Localization(Enum):
+    INTRACELLULAR = "intracellular"
+    MEMBRANE      = "membrane"
+    SECRETED      = "secreted"
 
     # Define the Node class with a name and localization
 

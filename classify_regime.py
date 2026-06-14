@@ -6,7 +6,7 @@ from radial_autocor_npz import autocorrelation_2d, analyze_image_autocorrelation
 SIM_PARAMS = {
     "Ny": 100,           # grid height (smaller for speed)
     "Nx": 100,           # grid width
-    "steps": 50000,     # max steps
+    "steps": 5000,     # max steps
     "dt": 0.01,
     "dx": 1.0,
     "stopping_threshold": 1e-6,  # much stricter — don't stop early
@@ -17,15 +17,16 @@ SIM_PARAMS = {
 
 # Fixed biological parameters matching Fig 1C
 BASE_PARAMS = {
-    "act_half_sat": 1.0,    # fixed — was 3.0, wrong
-    "inh_half_sat": 1.0,    # fixed — was 1.0, wrong
+    "act_half_sat": 1.0,
+    "inh_half_sat": 1.0,
     "act_decay_rate": 1.0,
-    "inh_decay_rate": 0.5,    # was 1.0 — this was killing the steady state
+    "inh_decay_rate": 0.5,
     "act_diffusion": 0.0,
-    "inh_diffusion": 10.0,
+    "inh_diffusion": 20.0,
     "basal_prod": 0.0,
-    "act_hill_coeff": 3,
-    "inh_hill_coeff": 3,
+    "act_hill_coeff": 10,
+    "inh_hill_coeff": 4,
+    "act_prod_rate": 5.0,
 }
 
 np.random.seed(42)
@@ -58,12 +59,11 @@ def classify_regime(act_prod_rate, inh_prod_rate):
     init_mode="spike_steady_state",
     activator_type="juxtacrine",
     spike_value=SIM_PARAMS["spike_value"],
-    save_every=SIM_PARAMS["save_every"]
+    save_every=SIM_PARAMS["save_every"],
     )
     final_A_spike = A_hist[-1]
     # Check for ON state
-    if np.mean(final_A) > 0.1 and np.std(final_A) < 0.01:
-        return "ON"
+if np.mean(final_A_spike > 0.5 * a_ss) > 0.8:
     # DEBUG
     print(f"final_A_spike mean: {np.mean(final_A_spike):.4f}")
     print(f"final_A_spike max: {np.max(final_A_spike):.4f}")
@@ -82,7 +82,6 @@ def classify_regime(act_prod_rate, inh_prod_rate):
         A_2d, df = analyze_image_autocorrelation(final_A)
         radial_ac = df["radial_autocorrelation"].values
         if np.any(radial_ac < 0):
-            # Secondary check — sharp FFT peak confirms Turing vs Irregular
             fft = np.abs(np.fft.fft2(final_A))
             fft[0, 0] = 0
             peak = np.max(fft)
@@ -95,18 +94,23 @@ def classify_regime(act_prod_rate, inh_prod_rate):
     if np.mean(final_A_spike) < 0.1:
         return "OFF"
     #Check 3 — ON: more than 80% of cells in final_A_spike are above a_ss × 0.5 → return "ON"
-    if np.mean(final_A_spike > 0.5 * a_ss) > 0.8:
-        return "ON"
+        # Refer to line 67 for nucleation
+        if np.mean(final_A_spike > 0.5 * a_ss) > 0.8:
+            return "ON"
     #Check 4 — IRREGULAR: if none of the above → return "IRREGULAR"
     return "IRREGULAR"
 
 # Main execution
 if __name__ == "__main__":
     test_cases = [
+        # (8.0, 2.0),   # expect ON
+        # (5.0, 5.0),   # expect IRREGULAR
+        # (10.0, 8.0),   # expect TURING
+        # (3.0, 8.0),   # expect OFF
+
+        (5.0, 25.0),  # expect Irregular
         (8.0, 2.0),   # expect ON
-        (5.0, 5.0),   # expect IRREGULAR
-        (10.0, 8.0),   # expect TURING
-        (3.0, 8.0),   # expect OFF
+        (3.0, 8.0)   # expect OFF
     ]
     for ba, bi in test_cases:
         regime = classify_regime(ba, bi)
