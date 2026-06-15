@@ -333,3 +333,5 @@ def _round_if_needed(x: float, tol: float) -> float:
     """
     dec = 3 if tol <= 1e-3 else 2
     return float(np.round(x, dec))
+
+

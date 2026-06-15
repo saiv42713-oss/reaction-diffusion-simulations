@@ -98,7 +98,9 @@ def initialize_fields_2d(
     elif init_mode == "near_zero":
         activator = np.abs(np.random.randn(Ny, Nx)) * 0.01
         inhibitor = np.zeros((Ny, Nx), dtype=float)
-
+    elif init_mode == "noise_around_state":
+        activator = spike_value_a + 0.01 * np.random.randn(Ny, Nx)
+        inhibitor = spike_value_i + 0.01 * np.random.randn(Ny, Nx)
     else:
         raise ValueError(f"Unknown init_mode: {init_mode!r}")
 
