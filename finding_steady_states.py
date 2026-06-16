@@ -109,13 +109,13 @@ def fast_stable_steady_state(
 
     Returns
     -------
-    a_star, i_star, H_star
+    a_ss, i_ss, H_ss
         Rounded steady-state values. Returns (0.0, 0.0, 0.0) if no stable
         non-null steady state is found.
     """
     # Convert production / decay ratios into linear scaling factors.
     A = float(p["act_prod_rate"]) / float(p["act_decay_rate"])
-    I = float(p["inh_prod_rate"]) / float(p["inh_decay_rate"])
+    I = float(p["inh_prod_rate"]) / float(p["inh_decay_rate"])    
 
     # Hill parameters.
     ka = p["act_half_sat"]
@@ -334,4 +334,127 @@ def _round_if_needed(x: float, tol: float) -> float:
     dec = 3 if tol <= 1e-3 else 2
     return float(np.round(x, dec))
 
+def find_unstable_fixed_point(params, a_ss, i_ss, activator_type="juxtacrine", 
+                               tol: float = 5e-4, max_newton: int = 12) -> float:
+    
+    # Convert production / decay ratios into linear scaling factors.
+    A = float(params["act_prod_rate"]) / float(params["act_decay_rate"])
+    I = float(params["inh_prod_rate"]) / float(params["inh_decay_rate"])
 
+    # Hill parameters.
+    ka = params["act_half_sat"]
+    ki = params["inh_half_sat"]
+    n = params["act_hill_coeff"]
+    m = params["inh_hill_coeff"]
+    basal = float(params.get("basal_prod", 0.0))
+
+    # In this model, H is typically confined to [basal, basal + 1].
+    # Keep the lower bound slightly above zero when basal is zero.
+    H_lo = basal + (1e-9 if basal == 0.0 else 0.0)
+    H_hi = basal + 1.0 - 1e-9
+        
+    def F(H: float) -> float:
+        Hval, _, _ = hill_with_grads(
+            A * H, I * H, ka, ki, n, m, basal, activator_type
+        )
+        return Hval
+
+    def g(H: float) -> float:
+        # Solve H = F(H), i.e. g(H) = F(H) - H = 0
+        return F(H) - H
+
+    def gprime(H: float) -> float:
+        # Chain rule:
+        # g'(H) = A * dH/da + I * dH/di - 1
+        _, dH_da, dH_di = hill_with_grads(
+            A * H, I * H, ka, ki, n, m, basal, activator_type
+        )
+        return A * dH_da + I * dH_di - 1.0
+
+    # Try to converge toward the upper non-null branch first.
+    for H0 in (0.9 * H_hi + 0.1 * H_lo, 0.2 * H_hi + 0.8 * H_lo):
+        H = H0
+        lo, hi = H_lo, H_hi
+        for _ in range(max_newton):
+            f = g(H)
+            if abs(f) < tol:
+                break
+
+            gp = gprime(H)
+
+            # If the derivative is unusable, fall back to bisection.
+            if not np.isfinite(gp) or abs(gp) < 1e-8:
+                H = 0.5 * (lo + hi)
+            else:
+                Hn = H - f / gp  # Newton step
+
+                # Keep the iterate inside the bracket.
+                if Hn <= lo or Hn >= hi:
+                    Hn = 0.5 * (H + (lo if f > 0 else hi))
+                H = Hn
+
+            # Maintain a simple sign bracket.
+            try:
+                if g(lo) * g(H) <= 0:
+                    hi = H
+                else:
+                    lo = H
+            except Exception:
+                pass
+                
+    converged = abs(g(H)) < tol
+
+    # If Newton did not converge, refine with a small bracketed solver.
+    if not converged:
+        glo, ghi = g(lo), g(hi)
+        if not (np.isfinite(glo) and np.isfinite(ghi) and glo * ghi <= 0):
+            span = max(1e-3, 0.05 * (H_hi - H_lo))
+            lo, hi = max(H_lo, H - span), min(H_hi, H + span)
+
+        H = _mini_brent(g, lo, hi, tol)
+
+    # Final safety check: if this is still weak, scan for sign changes.
+    if abs(g(H)) >= 5 * tol:
+        Hs = np.linspace(H_lo, H_hi, 64)
+        gs = np.array([g(h) for h in Hs])
+
+        candidates = []
+        for k in range(len(Hs) - 1):
+            if np.isfinite(gs[k]) and np.isfinite(gs[k + 1]) and gs[k] * gs[k + 1] <= 0:
+                Hr = _mini_brent(g, Hs[k], Hs[k + 1], tol)
+                candidates.append(Hr)
+
+        # Prefer the largest positive non-trivial root.
+        candidates = [h for h in candidates if h > (basal + 10 * tol)]
+        if candidates:
+            H = max(candidates)
+
+    a = max(A * H, 0.0)
+    i = max(I * H, 0.0)
+
+    if not _is_reaction_stable(a, i, params)  and (a > 0 or i > 0) and abs(g(H)) < 5 * tol:
+        return np.sqrt((a - a_ss)**2 + (i - i_ss)**2)
+
+    # Fallback: scan the interval for sign-change brackets and test each root.
+    Nscan = 64
+    Hs = np.linspace(H_lo, H_hi, Nscan)
+    gs = np.array([g(h) for h in Hs])
+
+    intervals = []
+    for k in range(Nscan - 1):
+        if not np.isfinite(gs[k]) or not np.isfinite(gs[k + 1]):
+            continue
+        if gs[k] == 0.0:
+            intervals.append((max(H_lo, Hs[k] - 1e-6), min(H_hi, Hs[k] + 1e-6)))
+        elif gs[k] * gs[k + 1] < 0:
+            intervals.append((Hs[k], Hs[k + 1]))
+
+    for lo, hi in intervals:
+        H = _mini_brent(g, lo, hi, tol)
+        a = max(A * H, 0.0)
+        i = max(I * H, 0.0)
+        if not _is_reaction_stable(a, i, params) and (a > 0 or i > 0):
+            return np.sqrt((a - a_ss)**2 + (i - i_ss)**2)
+
+    # No stable non-null root found.
+    return None
