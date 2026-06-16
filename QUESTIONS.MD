@@ -5,7 +5,7 @@ Form: Question:__________  By: _____ Status: ________ [Incomplete, Complete/Answ
 
 
 # Questions
-    1. Question: Are there additional biological rules beyond the three we encoded that should filter circuits out?  By: Sai Status: Incomplete 
+    1. Question: bi=12 (Irregular) and bi=14 (OFF) produce nearly identical simulation outputs from random spike initialization. Both show sparse sustained spots with similar FFT ratios. How should we distinguish these at the boundary?" By: Sai Status: Incomplete
         Response: _____________ By: ________
     2. Question: Should we extend to 3-node circuits now or refine 2-node first?  By: Sai Status: Incomplete 
         Response: _____________ By: ________
