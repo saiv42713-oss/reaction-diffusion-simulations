@@ -14,7 +14,7 @@ Dependencies:
 
 Example
 -------
-python batch_runner.py --config config.yaml
+python batch_runner.py --config config_2D.yaml
 """
 
 from __future__ import annotations
@@ -100,7 +100,7 @@ def main() -> None:
     parser.add_argument(
         "--config",
         "-c",
-        default="config.yaml",
+        default="config_2D.yaml",
         help="Path to YAML configuration file.",
     )
     args = parser.parse_args()
