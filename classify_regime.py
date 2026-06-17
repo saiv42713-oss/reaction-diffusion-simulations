@@ -37,7 +37,7 @@ def classify_regime(act_prod_rate, inh_prod_rate, debug=False):
               "act_prod_rate": act_prod_rate,
               "inh_prod_rate": inh_prod_rate}
 
-    a_ss, i_ss, _ = fast_stable_steady_state(params)
+    a_ss, i_ss, _ = fast_stable_steady_state(params, activator_type="juxtacrine")
     # Although, i_ss, final_step, and R_hist, are not used, they are returned by the function and are therefore expected by, annoyingly. 
     # Also, a_ss is not there because it being returned as a tuple not float
 
@@ -144,6 +144,10 @@ def classify_regime(act_prod_rate, inh_prod_rate, debug=False):
             else:
                 return "IRREGULAR"
             
+    # Check 4 — OFF
+    if np.mean(final_A_spike) < 0.1:
+        return "OFF"
+
     # Check 3b — IRREGULAR from spike simulation
     if np.mean(final_A_spike) > 0.01 and np.std(final_A_spike) > 0.01:
         A_2d, df = analyze_image_autocorrelation(final_A_spike)
@@ -158,11 +162,6 @@ def classify_regime(act_prod_rate, inh_prod_rate, debug=False):
             else:
                 return "IRREGULAR"
 
-
-    # Check 4 — OFF
-    if np.mean(final_A_spike) < 0.1:
-        return "OFF"
-
     # Check 5 — fallback
     return "IRREGULAR"
 
@@ -171,7 +170,7 @@ def classify_regime_and_return_fields(act_prod_rate, inh_prod_rate):
     params = {**BASE_PARAMS,
               "act_prod_rate": act_prod_rate,
               "inh_prod_rate": inh_prod_rate}
-    a_ss, _, _ = fast_stable_steady_state(params)
+    a_ss, _, _ = fast_stable_steady_state(params, activator_type="juxtacrine")
     A_hist, R_hist, _, _, _ = run_coupled_hex(
         SIM_PARAMS["Ny"], SIM_PARAMS["Nx"],
         SIM_PARAMS["steps"], SIM_PARAMS["dt"], SIM_PARAMS["dx"],
@@ -187,35 +186,37 @@ def classify_regime_and_return_fields(act_prod_rate, inh_prod_rate):
 
 
 if __name__ == "__main__":
-    test_cases = [
-        (5.0, 1.0),   # → ON
-        (5.0, 5.0),   # → TURING
-        (5.0, 12.0),  # → IRREGULAR
-        (5.0, 14.0), # → OFF
-    ]
-    for ba, bi in test_cases:
-        regime = classify_regime(ba, bi)
-        print(f"ba={ba}, bi={bi} → {regime}")
+#     test_cases = [
+#         (5.0, 1.0),   # → ON
+#         (5.0, 3.0),   # → TURING
+#         (5.0, 5.0),   # → TURING
+#         (5.0, 12.0),  # → IRREGULAR
+#         (5.0, 14.0),  # → OFF
+# ]
+    
+    # for ba, bi in test_cases:
+    #     regime = classify_regime(ba, bi)
+    #     print(f"ba={ba}, bi={bi} → {regime}")
 
-params = {**BASE_PARAMS, "act_prod_rate": 5.0, "inh_prod_rate": 25.0}
-a_ss, i_ss, _ = fast_stable_steady_state(params)
-print(f"a_ss={a_ss}, i_ss={i_ss}")
+    params = {**BASE_PARAMS, "act_prod_rate": 5.0, "inh_prod_rate": 25.0}
+    a_ss, i_ss, _ = fast_stable_steady_state(params)
+    print(f"a_ss={a_ss}, i_ss={i_ss}")
 
-params = {**BASE_PARAMS, "act_prod_rate": 5.0, "inh_prod_rate": 25.0}
+    params = {**BASE_PARAMS, "act_prod_rate": 5.0, "inh_prod_rate": 25.0}
 
-H_lo, H_hi = 1e-9, 1.0 - 1e-9
-Hs = np.linspace(H_lo, H_hi, 64)
+    H_lo, H_hi = 1e-9, 1.0 - 1e-9
+    Hs = np.linspace(H_lo, H_hi, 64)
 
-A = params["act_prod_rate"] / params["act_decay_rate"]
-I = params["inh_prod_rate"] / params["inh_decay_rate"]
+    A = params["act_prod_rate"] / params["act_decay_rate"]
+    I = params["inh_prod_rate"] / params["inh_decay_rate"]
 
-from finding_steady_states import hill_with_grads
-gs = []
-for H in Hs:
-    Hval, _, _ = hill_with_grads(A*H, I*H, 1.0, 1.0, 10, 4, 0.0)
-    gs.append(Hval - H)
+    from finding_steady_states import hill_with_grads
+    gs = []
+    for H in Hs:
+        Hval, _, _ = hill_with_grads(A*H, I*H, 1.0, 1.0, 10, 4, 0.0)
+        gs.append(Hval - H)
 
-print(list(zip(Hs.round(4), [round(g,6) for g in gs])))
+    print(list(zip(Hs.round(4), [round(g,6) for g in gs])))
 
-regime = classify_regime(5.0, 12.0, debug=True)
-print(f"ba=5.0, bi=12.0 → {regime}")
+    regime = classify_regime(5.0, 14.0, debug=True)
+    print(f"ba=5.0, bi=14.0 → {regime}")
