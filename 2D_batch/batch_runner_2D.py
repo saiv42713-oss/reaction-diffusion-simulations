@@ -36,6 +36,7 @@ from grid import make_param_grid
 from io_utils import write_constants_txt
 from simulation_2D import run_coupled_hex as run_coupled_hex_sim
 from visualize_2D import plot_one_frame
+from finding_steady_states import fast_stable_steady_state, find_unstable_fixed_point
 
 
 # Set a fixed seed for reproducible random sampling.
@@ -75,6 +76,30 @@ def run_one_simulation(params: dict[str, Any]) -> dict[str, Any]:
     """
     Run one 2D simulation and return the fields needed for downstream export.
     """
+    p = params    
+    activator_type = params["activator_type"]
+    a_ss, i_ss, _ = fast_stable_steady_state(p, activator_type, tol=5e-4, max_newton=12)
+    # Although, i_ss, final_step, and R_hist, are not used, they are returned by the function and are therefore expected by, annoyingly. 
+    # Also, a_ss is not there because it being returned as a tuple not float
+
+    if a_ss == 0.0:
+        spike_value = params["spike_value"]
+        init_mode = "random_uniform_over0"
+    else:
+        spike_value = a_ss
+        init_mode = "noise_around_state"
+    # If a_ss is 0.0 then that means off because that is natural resting state
+    #function that produces an fast_unstable_state function. So to prevent Im replacing the a_ss with the spike_value, to reduce probabillity of missing turing/irregular
+
+    print(f"a_ss before threshold: {a_ss}")
+    threshold = find_unstable_fixed_point(params, a_ss, i_ss, activator_type="juxtacrine")
+    
+    ref = a_ss if a_ss > 0.0 else spike_value
+
+    if threshold is not None:
+        init_amplitude = threshold * 0.1
+    else:
+        init_amplitude = ref / 5
     result = run_coupled_hex_sim(
         params["Ny"],
         params["Nx"],
@@ -84,12 +109,13 @@ def run_one_simulation(params: dict[str, Any]) -> dict[str, Any]:
         params,
         params.get("stopping_threshold", 1e-4),
         params.get("min_steps", 10000),
-        init_mode=params.get("init_mode", "activator_spike"),
+        init_mode=init_mode,
         activator_type=params.get("activator_type", "juxtacrine"),
-        spike_value=params.get("spike_value", 5.0),
-        save_every=params.get("save_every", 100),
-        noise_amplitude=params.get("noise_amplitude", 0.0),
-        nucleation_rate=params.get("nucleation_rate", 0.02),
+        spike_value=spike_value,
+        save_every=params.get("save_every", 10000),
+        noise_amplitude=0.0,  # params.get("noise_amplitude", 0.0),
+        init_amplitude=init_amplitude,  # one-time perturbation at initnoise_amplitude=init_amplitude,
+        nucleation_rate=params.get("nucleation_rate", 0.00),
     )
 
     A_hist, R_hist, steps_used, a_ss, i_ss = result

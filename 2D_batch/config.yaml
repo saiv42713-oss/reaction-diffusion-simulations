@@ -1,9 +1,9 @@
-outdir: runs/template-single-circuit
+outdir: runs/fig1c-sweep
 
 base:
   Nx: 100
   Ny: 100
-  steps: 5000
+  steps: 50000
   dt: 0.01
   dx: 1.0
   save_every: 200
@@ -31,8 +31,11 @@ base:
 
 mode: grid
 sweeps:
-  inh_prod_rate:
-    lin: [1, 10.0, 10]  # alternative explicit 'lin' form
+  inh_prod_rate: [1, 3, 5, 12, 14]
+    #log: [0, 2, 6]
+    #exp: [0, 2, 6]
+    #grid: [0, 2, 6]
+  # 2-item list => linspace start..stop with num points
   #act_hill_coeff:
   #  lin: [1, 12, 12]
   #inh_hill_coeff:
