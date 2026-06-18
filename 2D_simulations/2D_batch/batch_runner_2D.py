@@ -127,7 +127,14 @@ def run_one(
     R_final = r.get("inhibitor_final")
 
     outfile_png = os.path.join(outdir, f"run_{run_id:04d}.png")
-    plot_one_frame(A_final, R_final, row["steps_used"], outfile_png)
+    plot_one_frame(
+        A_final,
+        R_final,
+        row["steps_used"],
+        outfile_png,
+        A_initial=r.get("activator_initial"),
+        R_initial=r.get("inhibitor_initial"),
+    )
 
     a_max = A_final.max()
     a_min = A_final.min()

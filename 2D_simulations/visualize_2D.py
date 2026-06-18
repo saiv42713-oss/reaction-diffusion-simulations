@@ -198,44 +198,59 @@ def animate_histories(
 
 
 def plot_one_frame(
-    A_hist_last: np.ndarray,
-    R_hist_last: np.ndarray,
+    A_final: np.ndarray,
+    R_final: np.ndarray,
     final_step: int,
     outfile_png: str,
-    title: str = "Final State (2D Hex Grid)",
+    title: str = "2D Hex Grid",
     hex_radius: float = 1.0,
     cmap_A: str = "Greens",
     cmap_R: str = "Blues",
+    A_initial: np.ndarray | None = None,
+    R_initial: np.ndarray | None = None,
 ) -> None:
-    """
-    Plot one activator/inhibitor state on a hexagonal lattice and save it.
-    """
-    A = np.asarray(A_hist_last)
-    R = np.asarray(R_hist_last)
+    """Plot initial and final activator/inhibitor states and save as PNG."""
 
-    vmax_A = max(1e-12, float(np.max(A)))
-    vmax_R = max(1e-12, float(np.max(R)))
+    A_final = np.asarray(A_final)
+    R_final = np.asarray(R_final)
+
+    if A_initial is None:
+        A_initial = A_final
+    if R_initial is None:
+        R_initial = R_final
+
+    A_initial = np.asarray(A_initial)
+    R_initial = np.asarray(R_initial)
+
+    vmax_A = max(1e-12, float(np.max([A_initial.max(), A_final.max()])))
+    vmax_R = max(1e-12, float(np.max([R_initial.max(), R_final.max()])))
 
     norm_A = Normalize(vmin=0.0, vmax=vmax_A)
     norm_R = Normalize(vmin=0.0, vmax=vmax_R)
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5), constrained_layout=True)
-    axA, axR = axes
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10), constrained_layout=True)
 
-    pcA = _add_hex_field(axA, A, cmap=cmap_A, norm=norm_A, hex_radius=hex_radius)
-    pcR = _add_hex_field(axR, R, cmap=cmap_R, norm=norm_R, hex_radius=hex_radius)
+    axA0, axR0 = axes[0]
+    axA1, axR1 = axes[1]
 
-    axA.set_title("Activator")
-    axR.set_title("Inhibitor")
-    axA.set_xlabel("x")
-    axA.set_ylabel("y")
-    axR.set_xlabel("x")
-    axR.set_ylabel("y")
+    pcA0 = _add_hex_field(axA0, A_initial, cmap=cmap_A, norm=norm_A, hex_radius=hex_radius)
+    pcR0 = _add_hex_field(axR0, R_initial, cmap=cmap_R, norm=norm_R, hex_radius=hex_radius)
+    pcA1 = _add_hex_field(axA1, A_final, cmap=cmap_A, norm=norm_A, hex_radius=hex_radius)
+    pcR1 = _add_hex_field(axR1, R_final, cmap=cmap_R, norm=norm_R, hex_radius=hex_radius)
 
-    fig.colorbar(pcA, ax=axA, fraction=0.046, pad=0.04)
-    fig.colorbar(pcR, ax=axR, fraction=0.046, pad=0.04)
+    axA0.set_title("Initial Activator")
+    axR0.set_title("Initial Inhibitor")
+    axA1.set_title("Final Activator")
+    axR1.set_title("Final Inhibitor")
 
-    fig.suptitle(f"{title}\nStep {final_step}")
+    for ax in axes.ravel():
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+
+    fig.colorbar(pcA1, ax=[axA0, axA1], fraction=0.046, pad=0.04, label="Activator")
+    fig.colorbar(pcR1, ax=[axR0, axR1], fraction=0.046, pad=0.04, label="Inhibitor")
+
+    fig.suptitle(f"{title}\nFinal step {final_step}")
     fig.savefig(outfile_png, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
