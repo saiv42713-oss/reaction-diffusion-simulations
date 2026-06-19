@@ -3,12 +3,12 @@ outdir: runs/template-single-circuit
 base:
   Nx: 100
   Ny: 100
-  steps: 50000
+  steps: 100000
   dt: 0.01
   dx: 1.0
-  save_every: 2000
+  save_every: 4000
   stopping_threshold: 0.0
-  min_steps: 10000
+  min_steps: 20000
   nucleation_rate: 0.00001
   noise_amplitude: 0.001
 
