@@ -8,22 +8,24 @@ checkpointing.
 
 Usage
 ─────
-    python circuit_classifier_runner.py               # fresh run
-    python circuit_classifier_runner.py --resume      # continue from checkpoint
-    python circuit_classifier_runner.py --dry-run 20  # test on first 20 circuits
+    python scripts/circuit_classifier_runner.py               # fresh run
+    python scripts/circuit_classifier_runner.py --resume      # continue from checkpoint
+    python scripts/circuit_classifier_runner.py --dry-run 20  # test on first 20 circuits
 
 Output
 ──────
-    checkpoint_results.csv   — written incrementally every SAVE_EVERY circuits
-    classification_results.csv — final sorted output written when all done
+    checkpoint_results.csv        — written incrementally every SAVE_EVERY circuits
+    data/classification_results.csv — final sorted output written when all done
 """
 
+import sys
 import argparse
 import json
 import os
 import time
 import traceback
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
 import pandas as pd
@@ -32,7 +34,7 @@ from joblib import Parallel, delayed
 # ── Patch SIM_PARAMS BEFORE importing classify_regime functions ───────────────
 # These override the hardcoded values inside classify_regime.py so we don't
 # have to touch that file.  Must happen before any worker imports the module.
-import classify_regime as _cr
+import core.classify_regime as _cr
 _cr.SIM_PARAMS.update({
     "Ny":                 100,
     "Nx":                 100,
@@ -42,14 +44,14 @@ _cr.SIM_PARAMS.update({
     "save_every":         500,
 })
 
-from classify_regime import classify_regime, BASE_PARAMS          # noqa: E402
-from finding_steady_states import fast_stable_steady_state        # noqa: E402
+from core.classify_regime import classify_regime, BASE_PARAMS          # noqa: E402
+from core.finding_steady_states import fast_stable_steady_state        # noqa: E402
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-REPO_ROOT        = Path(__file__).parent
-CIRCUITS_FILE    = REPO_ROOT / "valid_circuits.json"
-CHECKPOINT_FILE  = REPO_ROOT / "checkpoint_results.csv"
-OUTPUT_FILE      = REPO_ROOT / "classification_results.csv"
+REPO_ROOT        = Path(__file__).parent.parent
+CIRCUITS_FILE    = REPO_ROOT / "data" / "valid_circuits.json"
+CHECKPOINT_FILE  = REPO_ROOT / "data" / "checkpoint_results.csv"
+OUTPUT_FILE      = REPO_ROOT / "data" / "classification_results.csv"
 
 # ── Run config ────────────────────────────────────────────────────────────────
 N_JOBS     = 8     # increased from 4 — use more cores for parallel workers
@@ -137,10 +139,15 @@ def process_circuit(circuit: dict) -> dict:
     # joblib loky spawns fresh processes on macOS — they re-import classify_regime
     # from disk and get the original values.  We must patch again here so the
     # actual simulation sees the optimized settings, not the hardcoded defaults.
-    import classify_regime as _cr_local
+    import sys as _sys
+    from pathlib import Path as _Path
+    _repo = str(_Path(__file__).parent.parent)
+    if _repo not in _sys.path:
+        _sys.path.insert(0, _repo)
+    import core.classify_regime as _cr_local
     _cr_local.SIM_PARAMS.update({
-        "Ny":                 100,
-        "Nx":                 100,
+        "Ny":                 40,
+        "Nx":                 40,
         "steps":              50000,
         "stopping_threshold": 1e-4,
         "min_steps":          5000,
@@ -171,12 +178,18 @@ def process_circuit(circuit: dict) -> dict:
 
     # ── Full simulation ───────────────────────────────────────────────────────
     try:
-        regime = classify_regime(act_prod_rate, inh_prod_rate)
+        regime, diagnostics = classify_regime(act_prod_rate, inh_prod_rate)
         return {
             "index":          idx,
             "act_prod_rate":  act_prod_rate,
             "inh_prod_rate":  inh_prod_rate,
             "regime":         regime,
+            "fft_ratio":      diagnostics["fft_ratio"],
+            "uniformity":     diagnostics["uniformity"],
+            "fft_ratio_spike":      diagnostics.get("fft_ratio_spike", None),
+            "n_features":           diagnostics.get("n_features", None),
+            "spacing_regularity":   diagnostics.get("spacing_regularity", None),
+            "interfeature_dist":    diagnostics.get("interfeature_dist", None),
             "source":         "simulation",
             "elapsed_s":      round(time.time() - t0, 2),
             "error":          "",
@@ -192,6 +205,12 @@ def _error_row(idx, ba, bi, msg, t0):
         "act_prod_rate":  ba,
         "inh_prod_rate":  bi,
         "regime":         "ERROR",
+        "fft_ratio":      None,
+        "uniformity":     None,
+        "fft_ratio_spike": None,
+        "n_features":     None,
+        "spacing_regularity": None,
+        "interfeature_dist": None,
         "source":         "simulation",
         "elapsed_s":      round(time.time() - t0, 2),
         "error":          msg.replace("\n", " | ")[:300],
