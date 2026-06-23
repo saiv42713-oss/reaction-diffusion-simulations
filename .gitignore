@@ -6,3 +6,9 @@ __pycache__/
 *.log
 *.pot
 *.pyc
+# Generated outputs / results — regenerate via the relevant script instead of committing
+outputs/*.png
+data/*_results.json
+data/classification_results.csv
+data/checkpoint_results.csv
+calibration_*.png
