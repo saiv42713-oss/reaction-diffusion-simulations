@@ -64,7 +64,7 @@ JAPI_GeneCircuit_USC/
 
 ## What This Does
 
-### Phase 1 — Circuit Enumeration (Complete)
+### Phase 1 - Circuit Enumeration (Complete)
 1. Generates all 21,609 possible 2-node circuit designs
 2. Filters to 1,849 biologically valid circuits
 3. Stores each circuit as a NetworkX graph and JSON object
@@ -72,7 +72,7 @@ JAPI_GeneCircuit_USC/
 5. Draws top candidates as diagrams matching Fig S15 notation style
 6. JAPI circuit confirmed at index 1285
 
-### Phase 2 — Pattern Classification (Complete)
+### Phase 2 - Pattern Classification (Complete)
 1. Replicates Fig. 1C from the paper (juxtacrine + paracrine rows, all 10 panels)
    — confirmed by PI (Leonardo Morsut)
 2. Implements a dual-simulation regime classifier:
