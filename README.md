@@ -1,33 +1,64 @@
 # Activator-Inhibitor Reaction-Diffusion Simulations
+
 ## Description
 Simulations for an activator-inhibitor pair of partial differential equations representing a reaction-diffusion circuit. The activator can be of two forms: juxtacrine, or paracrine. In the former, it travels in space through neighbour activation, in the latter, through diffusion. The inhibitor is always diffusible. This repository contains code for running 1D and 2D simulations of a single circuit. Additionally, it enables running two independent or cross-inhibiting circuits in two dimensions.
 
-## Structure
-- 1D simulations
-   - single runs
-   - 1D_batch
-- 2D simulations
-   - single runs
-   - 2D_batch
-## Usage
-Single, 1D simulations: python 1D simulations/main.py
+---
 
-With output 3D visualization: python 1D simulations/run_3D_surface_visualization.py --output test
+## Repository Structure
 
-Batch 1D simulations: python 1D simulations/1D_batch/batch_runner.py -c 1D simulations/1D_batch/config.yaml
-
-Single 2D simulations for a single circuit: python simulations/main.py
-
-Batch 2D simulations for a single circuit: python 2D_simulations/2D_batch/batch_runner_2D.py
-
-Single 2D simulations for a dual circuit: python 2D simulations/main_coupled_2D.py
-
-Batch 2D simulations for coupled circuits: python 2D_simulations/2D_batch/batch_coupled_2D.py
-
-# JAPI Circuit Enumerator
-A computational framework for enumerating, filtering, and evaluating
-genetic circuit designs for biological patterning, based on Fig S15
-from Kunnan et al. 2026 (Morsut Lab, USC).
+```
+JAPI_GeneCircuit_USC/
+├── core/                          # Python package — simulation engine + classification logic
+│   ├── __init__.py
+│   ├── JAPI_Circuit.py            # Circuit enumeration, LSA Turing check, diagram drawing
+│   ├── classify_regime.py         # Dual-sim regime classifier (ON/TURING/IRREGULAR/OFF)
+│   ├── pattern_metrics_reference.py  # PI-provided pattern descriptors (describe_pattern)
+│   ├── finding_steady_states.py   # Steady-state solver and stability utilities
+│   ├── simulation_2D.py           # 2D hex-grid simulator (juxtacrine + paracrine)
+│   ├── radial_autocor_npz.py      # Radial autocorrelation analysis
+│   ├── parameters.py              # Default 1D/shared simulation parameters
+│   ├── parameters_2D.py           # Default 2D simulation parameters
+│   └── visualize_2D.py            # Hex-grid visualization utilities
+│
+├── scripts/                       # Runnable entry points (run from project root)
+│   ├── fig1c.py                   # Replicate Fig. 1C (juxtacrine + paracrine panels)
+│   ├── sweep.py                   # Parameter sweep over ba/bi space + regime map
+│   ├── calibrate.py               # Pattern metric calibration on known cases
+│   ├── circuit_classifier_runner.py  # Batch classify all 1,849 circuits (parallel + checkpoint)
+│   ├── pattern_metrics_runner.py  # Batch describe_pattern() over a directory of .npz files
+│   ├── grid_sweep.py              # 3-axis grid sweep (bi × hill_coeff × diffusion)
+│   └── make_animation.py          # Generate mp4 animations across bi values
+│
+├── analysis/                      # Post-processing tools for .npz simulation outputs
+│   ├── radial_autocor_npz.py      # Radial autocorrelation batch analysis
+│   ├── crosscorr_npz.py           # A-B cross-correlation analysis
+│   ├── fft_analysis_2D.py         # FFT power spectrum analysis
+│   ├── npz_count_activated_hex.py # Count activated hexagonal cells
+│   ├── npz_feature_distribution.py  # Feature size/density distributions
+│   ├── npz_overlap_analysis.py    # Overlap analysis between fields
+│   └── plot_multiple_xcorr.py     # Multi-file cross-correlation plots
+│
+├── data/                          # Reference and result data files
+│   ├── valid_circuits.json        # All 1,849 biologically valid circuits
+│   ├── turing_results.json        # LSA Turing pass/fail for each circuit
+│   ├── fig1c_results.json         # Fig. 1C simulation results
+│   ├── classification_results.csv # Final regime classification for all circuits
+│   └── nicole_grid_results.csv    # 3-axis grid sweep results
+│
+├── outputs/                       # Generated plots, diagrams, and animations
+│   ├── fig1c.png                  # Validated Fig. 1C replication (10 panels)
+│   ├── japi_circuit.png           # JAPI circuit diagram with legend
+│   ├── circuits/                  # Top Turing candidate circuit diagrams
+│   │   └── circuit_top1–5.png
+│   └── field_*.png / param_map.png  # Sweep field snapshots and regime map
+│
+├── 1D_simuations/                 # Self-contained 1D simulation suite
+├── 2D_simulations/                # Self-contained 2D simulation suite
+├── 2D_batch/                      # Batch infrastructure for 2D sweeps
+├── Samples/                       # Reference circuit topology images
+└── reaction_diffusion_simulations/ # Git submodule (lab simulation base)
+```
 
 ---
 
@@ -45,88 +76,62 @@ from Kunnan et al. 2026 (Morsut Lab, USC).
 1. Replicates Fig. 1C from the paper (juxtacrine + paracrine rows, all 10 panels)
    — confirmed by PI (Leonardo Morsut)
 2. Implements a dual-simulation regime classifier:
-   - Sim 1: all_off + nucleation → tests spontaneous pattern formation
-   - Sim 2: spike_steady_state → tests ON state stability
+   - Sim 1: `all_off` + nucleation → tests spontaneous pattern formation
+   - Sim 2: `spike_steady_state` → tests ON state stability
    - Classifies each parameter set as ON / IRREGULAR / OFF / TURING
 3. Runs a 5×8 parameter sweep across ba and bi space (na=10, ni=4, Di=20)
 4. Generates a color-coded parameter space map showing regime boundaries
 
 ---
 
-## Output Files
-- `valid_circuits.json` - all 1,849 valid circuits
-- `turing_results.json` - Turing pass/fail for each circuit
-- `circuit_top1.png` through `circuit_top5.png` — top Turing candidate diagrams
-- `japi_circuit.png` - JAPI circuit diagram with legend
-- `fig1c_replication.png`- validated Fig 1C replication (10 panels)
-- `param_map.png` - regime map across ba/bi parameter space
-
----
-
 ## Setup
 
 1. Clone this repo:
+```bash
 git clone https://github.com/saiv42713-oss/JAPI_Genecircuit_USC.git
+cd JAPI_GeneCircuit_USC
+```
 
-2. Clone the lab simulation code:
-git clone https://github.com/BenSwedlund/reaction_diffusion_simulations
-
-3. Copy required files into this project folder:
-cp reaction_diffusion_simulations/1D_simulations/finding_steady_states.py .
-cp reaction_diffusion_simulations/1D_simulations/parameters.py .
-cp reaction_diffusion_simulations/2D_simulations/simulation_2D.py .
-cp reaction_diffusion_simulations/2D_simulations/parameters_2D.py .
-cp reaction_diffusion_simulations/2D_simulations/visualize_2D.py .
-cp reaction_diffusion_simulations/2D_simulations/res_analysis/radial_autocor_npz.py .
-
-4. Install dependencies:
+2. Install dependencies:
+```bash
 pip install networkx numpy matplotlib scipy scikit-image joblib tqdm pandas pyyaml
+```
 
 ---
 
 ## How to Run
 
+All scripts are run from the **project root**:
+
 ```bash
 # Phase 1 — full circuit enumeration pipeline
-python3 JAPI_Circuit.py
+python3 -m core.JAPI_Circuit
 
-# Phase 2 — replicate Fig. 1C (na=ni=3, juxtacrine + paracrine)
-python3 fig1c.py
+# Phase 2 — replicate Fig. 1C
+python3 scripts/fig1c.py
 
 # Phase 2 — run regime classifier calibration
-python3 calibrate.py
+python3 scripts/calibrate.py
 
 # Phase 2 — run parameter sweep and generate regime map
-python3 sweep.py
+python3 scripts/sweep.py
+
+# Phase 2 — classify all 1,849 circuits (parallel, with checkpointing)
+python3 scripts/circuit_classifier_runner.py
+
+# Phase 2 — batch pattern metrics over .npz outputs
+python3 scripts/pattern_metrics_runner.py <input_dir>
+
+# Phase 2 — 3-axis grid sweep (bi × hill_coeff × diffusion)
+python3 scripts/grid_sweep.py
+
+# Animations across bi values
+python3 scripts/make_animation.py
 ```
 
 ---
 
-## File Structure
-
-JAPI_Circuit.py              - Phase 1: enumeration, LSA, circuit diagrams
-
-classify_regime.py           - Phase 2: dual-sim regime classifier
-
-fig1c.py                     - Phase 2: Fig 1C replication (na=ni=3)
-
-sweep.py                     - Phase 2: parameter sweep + regime map
-
-calibrate.py                 - Phase 2: pattern metric calibration
-
-pattern_metrics_reference.py - PI-provided pattern descriptor (describe_pattern)
-
-valid_circuits.json          - 1,849 valid circuits
-
-turing_results.json          - LSA Turing check results per circuit
-
-param_map.png                - regime map (ba vs bi, na=10, ni=4, Di=20)
-
-fig1c_replication.png        - validated Fig 1C replication
-
----
-
-## Classifier Logic (classify_regime.py)
+## Classifier Logic (`core/classify_regime.py`)
 
 Each parameter set runs two simulations:
 
@@ -136,12 +141,12 @@ Each parameter set runs two simulations:
 | Sim 2 | `spike_steady_state` | Can the ON state sustain itself? |
 
 Classification order:
-1. **ON** - nucleation sim converges to uniform high-A (CV < 0.05)
-2. **ON** - spike sim shows >80% of cells above 0.5 × a_ss
-3. **TURING** - autocorrelation oscillates + FFT ratio > 40
-4. **IRREGULAR** - autocorrelation oscillates + FFT ratio ≤ 40
-5. **OFF** - spike sim collapses to zero
-6. **IRREGULAR** - fallback
+1. **ON** — nucleation sim converges to uniform high-A (CV < 0.05)
+2. **ON** — spike sim shows >80% of cells above 0.5 × a_ss
+3. **TURING** — autocorrelation oscillates + FFT ratio > 35
+4. **IRREGULAR** — autocorrelation oscillates + FFT ratio ≤ 35
+5. **OFF** — spike sim mean < 0.07
+6. **IRREGULAR** — fallback
 
 ---
 
@@ -155,10 +160,7 @@ Fixed parameters: `na=10, ni=4, Di=20, db=0.5, da=1, juxtacrine`
 | IRREGULAR | Balanced ba/bi — activator nucleates but inhibitor limits spread |
 | ON | High ba, low bi (activator dominates) |
 
-Turing patterns are rare at na=10, ni=4, the sharp switch forces cells to be
-fully ON or OFF, breaking the gradual gradients Turing requires. This matches
-the paper's finding that ~99% of non-homogeneous patterns are Irregular at
-experimentally measured Hill coefficients.
+Turing patterns are rare at na=10, ni=4; the sharp switch forces cells fully ON or OFF, breaking the gradual gradients Turing requires. This matches the paper's finding that ~99% of non-homogeneous patterns are Irregular at experimentally measured Hill coefficients.
 
 ---
 
@@ -169,9 +171,10 @@ experimentally measured Hill coefficients.
 - JSON circuit library and NetworkX graphs
 - LSA Turing checker (validated on JAPI at index 1285 and PAPI)
 - Fig S15-style circuit diagrams with legend
-- Fig 1C replication - PI confirmed
+- Fig 1C replication — PI confirmed
 - Dual-sim regime classifier (ON / IRREGULAR / OFF / TURING)
 - 5×8 parameter sweep with color-coded regime map
+- Repo reorganized into `core/`, `scripts/`, `analysis/`, `data/`, `outputs/`
 
 ### Next Steps
 - Connect Phase 1 to Phase 2: run each of the 1,849 circuits through
