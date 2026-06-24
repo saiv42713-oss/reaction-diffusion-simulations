@@ -4,9 +4,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.finding_steady_states import fast_stable_steady_state, find_unstable_fixed_point
 from core.simulation_2D import run_coupled_hex
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+from core.visualize_2D import animate_histories
 
 _OUTPUTS = Path(__file__).parent.parent / "outputs"
 _OUTPUTS.mkdir(exist_ok=True)
@@ -54,22 +52,15 @@ for bi in bi_values:
         init_amplitude=init_amplitude
     )
 
-    indices = np.linspace(0, len(A_hist) - 1, 100).astype(int)
-    selected_frames = [A_hist[i] for i in indices]
     print(f"bi={bi} -> frames captured: {len(A_hist)}, finished at step {final_step}")
 
-    vmin = np.min([frame.min() for frame in selected_frames])
-    vmax = np.max([frame.max() for frame in selected_frames])
-    fig, ax = plt.subplots(figsize=(6, 6))
-    im = ax.imshow(selected_frames[0], cmap="gray", vmin=vmin, vmax=vmax)
-    ax.set_title(f"bi={bi}")
-
-    def update(frame_index):
-        im.set_array(selected_frames[frame_index])
-        return [im]
-
-    ani = animation.FuncAnimation(fig, update, frames=len(selected_frames), interval=50)
     out = _OUTPUTS / f"bi_{bi}_animation.mp4"
-    ani.save(str(out), writer="ffmpeg", fps=20)
+    animate_histories(
+        A_hist,
+        R_hist,
+        save_every=40,
+        title=f"bi={bi}",
+        savefile=str(out),
+        fps=20,
+    )
     print(f"Saved {out}")
-    plt.close()
