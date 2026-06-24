@@ -61,7 +61,7 @@ JAPI_GeneCircuit_USC/
 
 ## What This Does
 
-### Phase 1 — Circuit Enumeration (Complete)
+### Phase 1 - Circuit Enumeration (Complete)
 1. Generates all 21,609 possible 2-node circuit designs
 2. Filters to 1,849 biologically valid circuits
 3. Stores each circuit as a NetworkX graph and JSON object
@@ -69,7 +69,7 @@ JAPI_GeneCircuit_USC/
 5. Draws top candidates as diagrams matching Fig S15 notation style
 6. JAPI circuit confirmed at index 1285
 
-### Phase 2 — Pattern Classification (Core validated, refinement in progress)
+### Phase 2 - Pattern Classification (Core validated, refinement in progress)
 1. Replicates Fig. 1C from the paper (juxtacrine + paracrine rows, all 10 panels) — confirmed by PI (Leonardo Morsut)
 2. Implements a dual-simulation regime classifier:
    - Sim 1: `all_off` + nucleation → tests spontaneous pattern formation
@@ -103,22 +103,22 @@ pip install networkx numpy matplotlib scipy scikit-image joblib tqdm pandas pyya
 All scripts are run from the **project root**:
 
 ```bash
-# Phase 1 — full circuit enumeration pipeline
+# Phase 1 - full circuit enumeration pipeline
 python3 -m core.JAPI_Circuit
 
-# Phase 2 — replicate Fig. 1C
+# Phase 2 - replicate Fig. 1C
 python3 scripts/fig1c.py
 
-# Phase 2 — run regime classifier calibration
+# Phase 2 - run regime classifier calibration
 python3 scripts/calibrate.py
 
-# Phase 2 — run parameter sweep and generate regime map
+# Phase 2 - run parameter sweep and generate regime map
 python3 scripts/sweep.py
 
-# Phase 2 — classify all 1,849 circuits (parallel, with checkpointing)
+# Phase 2 - classify all 1,849 circuits (parallel, with checkpointing)
 python3 scripts/circuit_classifier_runner.py
 
-# Phase 2 — 3-axis grid sweep (bi × hill_coeff × diffusion)
+# Phase 2 - 3-axis grid sweep (bi × hill_coeff × diffusion)
 python3 scripts/grid_sweep.py
 ```
 
