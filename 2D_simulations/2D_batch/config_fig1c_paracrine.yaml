@@ -1,0 +1,36 @@
+# Reference config — reproduces Fig 1C, paracrine row (5 panels: ON, stripes, reg spots, irregular, OFF)
+# Identical to config_fig1c_juxtacrine.yaml except activator_type and act_diffusion.
+outdir: runs/fig1c_paracrine
+
+base:
+  Nx: 100
+  Ny: 100
+  steps: 50000
+  dt: 0.01
+  dx: 1.0
+  stopping_threshold: 1.0e-6
+  min_steps: 5000
+
+  init_mode: random_uniform_over0
+  activator_type: paracrine
+  nucleation_rate: 0.0
+  noise_amplitude: 0.0
+  spike_value: 1.0
+
+  act_prod_rate: 5.0
+  act_half_sat: 1.0
+  inh_half_sat: 1.0
+  act_decay_rate: 1.0
+  inh_decay_rate: 0.5
+  act_diffusion: 1.0
+  inh_diffusion: 10.0
+  basal_prod: 0.0
+  act_hill_coeff: 3
+  inh_hill_coeff: 3
+
+  video_enable: false
+  term_plots_enable: false
+
+mode: grid
+sweeps:
+  inh_prod_rate: [1, 3, 5, 12, 14]
