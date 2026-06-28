@@ -1,4 +1,4 @@
-outdir: runs/template-single-circuit
+outdir: runs/fig1c-sweep
 
 base:
   Nx: 100
@@ -6,15 +6,13 @@ base:
   steps: 50000
   dt: 0.01
   dx: 1.0
-  save_every: 10000
-  stopping_threshold: 0.0
-  min_steps: 10000
-  nucleation_rate: 0.00001
-  noise_amplitude: 0.001
+  save_every: 200
+  stopping_threshold: 0.0001
+  min_steps: 1000
 
-  init_mode: near_zero
   activator_type: juxtacrine
-  spike_value: 5
+  spike_value: 5.0
+  nucleation_rate: 0.0
 
   act_decay_rate: 1.0
   act_half_sat: 1.0
@@ -25,7 +23,6 @@ base:
   inh_hill_coeff: 3
 
   act_prod_rate: 5.0
-  inh_prod_rate: 1.0
   inh_decay_rate: 0.5
 
   act_diffusion: 1.0
@@ -34,5 +31,3 @@ base:
 mode: grid
 sweeps:
   inh_prod_rate: [1, 3, 5, 12, 14]
-  act_hill_coeff: [1, 3, 5, 7, 9]
-  inh_diffusion: [2, 6, 10, 14, 18]
